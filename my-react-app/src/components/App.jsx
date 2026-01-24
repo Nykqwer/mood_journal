@@ -7,6 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 import Fab from '@mui/material/Fab';
 import Zoom from '@mui/material/Zoom';
 
+
+const SERVER = "http://localhost:5000"
+
 function App() {
 
 const moodKeywords = {
@@ -105,20 +108,24 @@ const moodEmojis = {
   calm: "😌",
   anxious: "😰",
   love: "❤️",
-  neutral: "😐"
 };
 
 // ----------------------------
 // States
 const [text, setText] = useState("");
 const [sentences, setSentences] = useState([]);
-const [adviceText, setAdviceText] = useState(""); // new state for advice display
+const [adviceText, setAdviceText] = useState(null); 
 const [input, setInput] = useState({
 title: "",
-content: ""
+content: "",
+
 });
 const [note, setNote] = useState([]);
 const [checked, setChecked] = useState(false);
+const [pinned, setPinned] = useState(false);
+
+
+
 // ----------------------------
 // Random advice helper
 function getRandomAdvice(adviceArray) {
@@ -167,23 +174,16 @@ function detectAllMoods(text) {
 
   for (const mood in moodKeywords) {
     if (words.some(word => moodKeywords[mood].includes(word))) {
-      detected.push(mood);
+      detected.push(mood); // ✅ push mood string
     }
   }
 
-  if (detected.length === 0) detected.push("neutral");
 
-  // Remove duplicates
+
   return [...new Set(detected)];
 }
 
 // ----------------------------
-// Emoji only if sentence finished
-function getEmojiForSentence(sentence) {
-  if (!isSentenceFinished(sentence)) return null;
-  const mood = detectMood(sentence);
-  return moodEmojis[mood] || "😐";
-}
 
 // ----------------------------
 // Split sentences but keep punctuation
@@ -217,7 +217,7 @@ typingTimerRef.current = setTimeout(() => {
   const detectedSentences = splitSentences(value).map(sentence => ({
     text: sentence,
     emoji: isSentenceFinished(sentence, true)
-      ? moodEmojis[detectMood(sentence)] || "😐"
+      ? moodEmojis[detectMood(sentence)]
       : null
   }));
 
@@ -228,88 +228,162 @@ typingTimerRef.current = setTimeout(() => {
 };
 
 // ----------------------------
-// Get advice for detected moods
-function getAdviceForMoods(moods) {
+// 1️⃣ Utility function
+function getRandomAdvice(list = []) {
+  if (!Array.isArray(list) || list.length === 0) return "";
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+// ---------------------------
+// 2️⃣ Advice logic
+function getAdviceForMoods(moods = []) {
+  if (!Array.isArray(moods) || moods.length === 0) {
+    return getRandomAdvice(adviceOptions.neutral);
+  }
+
   if (moods.length > 3) {
-    return getRandomAdvice(adviceOptions.mixed); // use mixed advice
+    return getRandomAdvice(adviceOptions.mixed);
   }
 
   if (moods.length === 1) {
-    return getRandomAdvice(adviceOptions[moods[0]]);
+    return getRandomAdvice(adviceOptions[moods[0]] ?? adviceOptions.neutral);
   }
 
-  // 2–3 moods → pick random advice for each mood
-  return moods.map(mood => getRandomAdvice(adviceOptions[mood])).join("  ");
+  return moods
+    .map(mood => getRandomAdvice(adviceOptions[mood] ?? adviceOptions.neutral))
+    .join("  ");
 }
 
 
-const now = new Date();
-
-const year = now.getFullYear();      // 2026
-const month = now.getMonth() + 1;    // 1–12 (add 1!)
-const day = now.getDate();   
-const formatted = `${month}/${day}/${year}`;
-
-// ----------------------------
 // Handle submit
-const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
-  if(!input.title.trim() && !input.content.trim()) return
-
-setNote(prevNote => [...prevNote, {
-  id: uuidv4(),
-  title: input.title,
-  content: input.content,
-  sentences,
-  isPinned: false,
-  createdAt: formatted,
-  order: prevNote.length // this is the key
-}]);
-
-
     // Analyze full mood text
-  const fullText = input.content;
+    const fullText = input.content;
 
-  // Detect all moods in the text
-  const moodsDetected = detectAllMoods(fullText);
+   // Detect all moods in the text
+    const moodsDetected = detectAllMoods(fullText);
 
-  // Get dynamic advice
-  const finalAdvice = getAdviceForMoods(moodsDetected);
 
-  // Set state to display
-  setAdviceText(finalAdvice);
+     // Get dynamic advice
+    const finalAdvice = getAdviceForMoods(moodsDetected);
 
-  setInput({title: "", content: ""});
-  setText("")
-  setSentences([]);
+    const emojisToSave = moodsDetected.map(m => moodEmojis[m]);
+
+
+
+    // Set state to display
+    setAdviceText(finalAdvice);
+
+  if (!input.title.trim() && !fullText.trim()) return;
+
+  try {
+
+    const noteId = uuidv4();
+    const res = await fetch(`${SERVER}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: noteId,
+          title: input.title,
+          content: input.content,
+          emojis: emojisToSave,  
+          sentences: finalAdvice,
+            
+        })
+      });
+
+
+    if (!res.ok) {
+      throw new Error("Failed to save note");
+    }
+
+  const savedNote = await res.json();
+  setNote(prev => [savedNote, ...prev]);
+
+    // Reset inputs
+    setInput({ title: "", content: "" });
+    setText("");
+    setSentences([]);
+    
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 
-function pinNote(id, checked) {
+
+function pinNote(updatedNote) {
   setNote(prev => {
     const updated = prev.map(note =>
-      note.id === id ? { ...note, isPinned: checked } : note
+      note.id === updatedNote.id ? updatedNote : note
     );
 
-    // Sort: pinned first, then original order
     return [...updated].sort((a, b) => {
-      if (a.isPinned !== b.isPinned) {
-        return b.isPinned - a.isPinned; // pinned first
+      if (a.is_pinned !== b.is_pinned) {
+        return b.is_pinned - a.is_pinned;
       }
-      return a.order - b.order; // restore original order
+      return b.original_order - a.original_order;
     });
   });
 }
 
-function deleteNote(id){
+
+
+const simpleZoom = () => (setChecked(true));
+
+
+useEffect(() => { 
+  const fetchNotes = async () => { 
+    try { 
+      const res = await fetch(`${SERVER}`); 
+      const data = await res.json(); 
+      
+      setNote(data);
+  } catch (err) { 
+    console.error("Error fetching notes:", err);
+   }}; 
+   
+   fetchNotes(); 
   
-  setNote(prevNote => (prevNote.filter(i =>  i.id !== id)))
-
-}
+  }, []);
 
 
-const simpleZoom = e => (setChecked(true));
+
+
+  function handleToggle(id){
+
+    const selectedNote = note.find(n => n.id === id);
+    if (!selectedNote) return;
+
+    setAdviceText(selectedNote.sentences)
+
+  };
+
+
+
+const deleteNote = async (id) => {
+  try {
+    const res = await fetch(`${SERVER}/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete note");
+    }
+
+    // This will remove it from frontend instantly
+    setNote(prevNote => prevNote.filter(i => i.id !== id));
+  } catch (err) {
+    console.error("Error deleting note: ", err);
+  }
+};
+
+
+
+
+
 
 
   return (
@@ -400,9 +474,9 @@ const simpleZoom = e => (setChecked(true));
         </div>
       <div className="advice-panel">
             <div>
-              {adviceText && ( 
-                 <h3>{adviceText}</h3>
-              )}
+
+           
+              {adviceText && <h3>{adviceText}</h3>}
              
             </div>
       </div>
@@ -415,11 +489,12 @@ const simpleZoom = e => (setChecked(true));
       id={item.id}
       title={item.title}
       content={item.content}
-      emojis={item.sentences.map(s => s.emoji)}
-      date={item.createdAt}
+      emojis={item.emojis}
+      date={item.created_at}
+      onToggle={handleToggle}
       onPin={pinNote}
       onDelete={deleteNote}
-      pinned={item.isPinned}
+      pinned={item.is_pinned}
     />
   </div>
 ))}

@@ -3,148 +3,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
-* {
-  margin: 0;
-  box-sizing: border-box;
-}
 
-body{
-    font-family: "Source Sans Pro", sans-serif;
-    background-color: #F6F8F7;
-background-image: url("https://www.transparenttextures.com/patterns/lined-paper.png");
-/* This is mostly intended for prototyping; please download the pattern and re-host for production environments. Thank you! */
-    color: #243333;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
 
-}
 
-header{
-    background-color: #5F8575;
-    height: 110px;
-    color: white;
-    font-size: 20px;
-    box-shadow: 0px 5px 0px rgba(0, 0, 0, 0.5s);
-}
 
-header div{
-    display: flex;
-    height: 100%;
-    align-items: center;
-}
 
-header div div{
-    width: 50%;
-}
 
-.left-content-head{
 
-display: flex;
-align-items: center;
-margin-left: 10px;
-}
 
-.left-content-head h1{
-  font-size: 34px;
-}
+ 
 
-.left-content-head img{
-    width: 100px;
-    height: 100px;
-}
 
-.main{
-     padding: 2rem 1rem;
-}
 
-.container {
-  max-width: 1800px;
-  margin: 0 auto;
-
-  display: grid;
-  gap: 2rem;
-
-}
-
-.top-content{
-    display: flex;
-}
-
-.card-content{
-
-    width: 720px;
-    height: auto;
-}
-
-.card{
-     border: 1px solid red;
-
-    color: black;
-    width: 640px;
-    height: auto;
-    background-color: white;
-    border: 0.5px solid rgb(196, 187, 187);
-    border-radius: 4px;
-    box-shadow: 1px 5px 1px rgba(0, 0, 0, 0.5s);
-    position: relative;
-}
-
-.cardTitle{
-    position: absolute;
-      top: -0.6rem;
-      left: 30px;
-      background-color: #E6B566;
-      color: white;
-      width: 100px;
-      text-align: center;
-      border-radius: 4px;
-      height: 24px;
-}
-
-.cardContent{
-display: flex;
-flex-direction: column;
-justify-content: center;
-
-}
-
-.input-content{
-
-  margin-top: 30px;
-}
-
-input, textarea{
-    margin-top: 10px;
-    height: 40px;
-    padding-left: 6px;
-    border-radius: 4px;
-    outline: none;
-    margin-bottom: 6px;
-    margin-left: 10px;
-    border: none;
-    font-size: 18px;
-    width: 96%;
-
-}   
-
-textarea{
-       /* increase height */
-margin-top: 2px;
-  resize: vertical;
-    font-size: 18px;
-
-}
-
-.emotion{
-
-    width: 260px;
-    height: 50px;
-    margin-left: 10px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-}
 
 @keyframes hoverShake {
   0% { transform: scale(1) translateX(0); }
@@ -180,40 +50,8 @@ margin-top: 2px;
   cursor: pointer;
 }
 
-.card button{
-    position: absolute;
-    bottom: -14px;
-    right: 14px;
-    border-radius: 50%;
-    height: 34px;
-    width: 34px;
-    border: none;
-    background-color: #E6B566;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-.advice-panel{
-    color: black;
 
-    width: 1080px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: "Inter", sans-serif;
-    font-weight: bold;
-    font-size: 30px;
-}
-
-.advice-panel div{
-
-    width: 80%;
-    text-align: center;
-
-    color: #E6B566;
-}
 
 .note-container{
   height: auto;
@@ -222,13 +60,6 @@ margin-top: 2px;
 
 }
 
-.note-card{
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 350px;
-}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

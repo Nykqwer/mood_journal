@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
 
 router.post("/submit", async (req, res) => {
   try {
-    const { id, title, content, sentences, emojis } = req.body;
+    const { id, title, content, sentences, emojis, color } = req.body;
 
     const result = await pool.query(
       `INSERT INTO notes (
@@ -40,7 +40,8 @@ router.post("/submit", async (req, res) => {
         emojis,
         sentences,
         is_pinned,
-        original_order
+        original_order,
+        card_color
       )
       VALUES (
         $1,
@@ -49,10 +50,11 @@ router.post("/submit", async (req, res) => {
         $4,
         $5,
         false,
-        COALESCE((SELECT MAX(original_order) FROM notes), 0) + 1
+        COALESCE((SELECT MAX(original_order) FROM notes), 0) + 1,
+        $6
       )
       RETURNING *`,
-      [id, title, content, emojis, sentences]
+      [id, title, content, emojis, sentences, color]
     );
 
     res.status(201).json(result.rows[0]);

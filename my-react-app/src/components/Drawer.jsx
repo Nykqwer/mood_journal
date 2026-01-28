@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerClose,
@@ -9,10 +9,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer"
-
-import styles from "./Card.module.css"
-
+} from "@/components/ui/drawer";
 export default function DrawerScrollableContent({
   children,
   id,
@@ -22,25 +19,24 @@ export default function DrawerScrollableContent({
   content,
   handleToggle,
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <Drawer
       direction="right"
       open={open}
       onOpenChange={(nextOpen) => {
-    
-        if (!nextOpen) return
-        setOpen(true)
+        setOpen(nextOpen);
+        handleToggle?.();
       }}
+      modal
+      dismissible={false}
     >
       <DrawerTrigger asChild>
         <Button
-          variant="outline"
-          className={styles.btn}
-          onClick={() => {
-            setOpen(true)
-            handleToggle?.()
+          className="appearance-none border-none bg-transparent text-blue-500 hover:bg-transparent focus:outline-none"
+          onClick={(e) => {
+            e.currentTarget.blur();
           }}
         >
           {children}
@@ -53,18 +49,15 @@ export default function DrawerScrollableContent({
           <DrawerDescription>{`${mood} - ${date}`}</DrawerDescription>
         </DrawerHeader>
 
-        <div className="no-scrollbar overflow-y-auto px-4">
-          {content}
-        </div>
+        <div className="no-scrollbar overflow-y-auto px-4">{content}</div>
 
         <DrawerFooter>
-       
           <DrawerClose asChild>
             <Button
               variant="outline"
               onClick={() => {
-                setOpen(false)
-                handleToggle?.()
+                setOpen(false); 
+                handleToggle?.();
               }}
             >
               Show less
@@ -73,5 +66,5 @@ export default function DrawerScrollableContent({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
-  )
+  );
 }

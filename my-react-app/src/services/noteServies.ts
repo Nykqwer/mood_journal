@@ -1,5 +1,15 @@
+
 const SERVER = "http://localhost:5000";
 
+
+type Note = {
+  id: string;
+  title: string;
+  content: string;
+  emojis: string[];
+  sentences: string;
+  color: string;
+}
 
 export async function fetchNotes() {
   const res = await fetch(SERVER);
@@ -10,7 +20,7 @@ export async function fetchNotes() {
 
   return res.json();
 }
-export async function createNote(note) {
+export async function createNote(note: Note) {
         const res = await fetch(`${SERVER}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,7 +37,7 @@ export async function createNote(note) {
 }
 
 
-export async function deleteNote(id) {
+export async function deleteNote(id:string) {
     const res = await fetch(`${SERVER}/${id}`, {
       method: "DELETE",
     });

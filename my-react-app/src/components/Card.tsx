@@ -6,33 +6,36 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import Drawer from "./Drawer";
+import { Note } from "./types/note";
+
 
 const SERVER = "http://localhost:5000";
 
 
+type NoteListProps = {
+  note: Note;
+  onToggle: (id: string) => void;
+  onPinned: (note: Note) => void;
+  onDelete: (id: string) => void; 
+}
+
 
 export default function OutlinedCard({
-  id,
-  title,
-  emojis,
-  date,
-  content,
-  pinned,
-  cardColor,
+  note,
   onToggle,
-  onPin,
+  onPinned,
   onDelete,
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [isPinned, setIsPinned] = useState(pinned);
+}: NoteListProps ) {
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const [isPinned, setIsPinned] = useState(note.is_pinned);
 
-  const handlePinned = async (e) => {
-    e.preventDefault();
+  const handlePinned = async () => {
+
 
     const updatedPinned = !isPinned;
 
     try {
-      const res = await fetch(`${SERVER}/${id}`, {
+      const res = await fetch(`${SERVER}/${note.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_pinned: updatedPinned }),
@@ -41,37 +44,33 @@ export default function OutlinedCard({
       if (!res.ok) throw new Error("Failed to update pin");
 
       const updatedNote = await res.json();
-
+      console.log(updatedNote, "eto yunnnnnn")
       setIsPinned(updatedPinned);
-      onPin(updatedNote);
+      onPinned(updatedNote);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleDelete = (e) => {
-    e.preventDefault();
 
-    onDelete(id);
-  };
 
-  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  const formattedDate = new Date(note.created_at).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 
   const displayText =
-    content.length < 65
-      ? content
-      : content.split(" ").slice(0, 65).join(" ") + "...";
+    note.content.length < 65
+      ? note.content
+      : note.content.split(" ").slice(0, 65).join(" ") + "...";
 
   return (
-    <Box sx={{ minWidth: 347 }} onClick={() => onToggle(id)}>
+    <Box sx={{ minWidth: 347 }} onClick={() => onToggle(note.id)}>
       <Card
         variant="outlined"
         sx={{
-          backgroundColor: `${cardColor}`,
+          backgroundColor: `${note.card_color}`,
           height: 300,
           position: "relative",
           borderRadius: 3,
@@ -91,20 +90,25 @@ export default function OutlinedCard({
             <PushPinIcon
               onClick={handlePinned}
               sx={{ fontSize: 15 }}
-              color={pinned ? "primary" : "inherit"}
+              color={note.is_pinned ? "primary" : "inherit"}
             >
-              {pinned ? "unpin" : "pin"}
+              {note.is_pinned ? "unpin" : "pin"}
             </PushPinIcon>
-            <CloseIcon onClick={handleDelete} sx={{ fontSize: 16 }} />
+            <CloseIcon onClick={() => onDelete(note.id)} sx={{ fontSize: 16 }} />
           </Box>
 
           {/* Title */}
-          <Typography variant="h5">{title}</Typography>
+          <Typography variant="h5">{note.title}</Typography>
 
           {/* Emojis */}
           <Typography sx={{ mb: 1.5, fontSize: 14 }}>
-            {emojis}{" "}
-            <span sx={{ ml: 4.5, color: "#666666" }}>{formattedDate}</span>
+            {note.emojis}{" "}
+           <Box
+              component="span"
+              sx={{ ml: 4.5, color: "#666666" }}
+            >
+              {formattedDate}
+          </Box>
           </Typography>
 
           {/* Mood Content */}
@@ -112,14 +116,14 @@ export default function OutlinedCard({
             {displayText}
 
             <Drawer
-              id={id}
-              title={title}
-              mood={emojis}
+              id={note.id}
+              title={note.title}
+              mood={note.emojis}
               date={formattedDate}
               handleToggle={() => setExpanded((prev) => !prev)}
-              content={content}
+              content={note.content}
             >
-              {content.length < 65 ? "" : expanded ? "Show less" : "Show more"}
+              {note.content.length < 65 ? "" : expanded ? "Show less" : "Show more"}
             </Drawer>
           </Typography>
         </CardContent>

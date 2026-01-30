@@ -6,7 +6,9 @@ import "@fontsource/source-sans-pro/400.css"; // regular
 import "@fontsource/source-sans-pro/600.css"; // semi-bold
 import Header from "./components/Header";
 
-createRoot(document.getElementById("root")).render(
+createRoot(
+  document.getElementById("root") as HTMLElement
+).render(
   <StrictMode>
     <Header />
     <main> 

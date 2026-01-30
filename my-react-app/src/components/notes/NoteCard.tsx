@@ -1,17 +1,21 @@
 import AddNoteForm from "./AddNoteForm";
+import {NoteListProps } from "../types/note";
+import { Note } from "../types/note";
+
+
 
 export default function NoteCard({
   onAddNote,
-  adviceText,
-  onSetAdviceText,
-  note,
-}) {
+  onAdvice,
+  noteData,
+  adviceText
+}:NoteListProps ) {
   return (
     <div className="flex flex-row">
       <AddNoteForm
-        onAdvice={onSetAdviceText}
+        onAdvice={onAdvice}
         onAddNote={onAddNote}
-        noteData={note}
+        noteData={noteData}
       />
 
       <div className="flex w-screen items-center justify-center px-2 text-4xl font-bold text-orange-300 md:px-4">

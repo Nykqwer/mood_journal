@@ -3,27 +3,63 @@ import Fab from "@mui/material/Fab";
 import Zoom from "@mui/material/Zoom";
 import { v4 as uuidv4 } from "uuid";
 import AddIcon from "@mui/icons-material/Add";
-import { moodEmojis } from "../../features/mood/moodEmojis";
+import { moodEmojis} from "../../features/mood/moodEmojis";
 import { detectAllMoods } from "../../features/mood/moodUtils";
 import { detectMood } from "../../features/mood/moodUtils";
 import { getAdviceForMoods } from "../../features/mood/moodUtils";
 import { createNote } from "../../services/noteServies";
+import { Note } from "../types/note";
+import { Advice } from "../../features/mood/adviceOptions";
+import { Mood } from "../../features/mood/moodKeywords";
+import { NoteListProps } from "../types/note";
 
-export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
-  const [text, setText] = useState("");
+type DetectedSentence = {
+  text: string;
+  emoji: string | null;
+};
 
-  const [sentences, setSentences] = useState([]);
+export default function AddNoteForm({ onAdvice, onAddNote, noteData }: NoteListProps) {
+  const [text, setText] = useState<string | null>("");
 
-  const [checked, setChecked] = useState(false);
-  const [active, setActive] = useState(false);
-  const [input, setInput] = useState({
+  const [sentences, setSentences] = useState<DetectedSentence[]>([]);
+
+  const [checked, setChecked] = useState<boolean>(false);
+  const [active, setActive] = useState<boolean>(false);
+  const [input, setInput] = useState<{title: string; content: string}>({
     title: "",
     content: "",
   });
 
   const simpleZoom = () => setChecked(true);
+  
+  const typingTimerRef = useRef<number | undefined>(undefined);
+  const TYPING_DELAY = 700;
 
-  const handleChange = (e) => {
+
+  // Check if sentence is finished
+  function isSentenceFinished(sentence : string, forced = false) {
+    if (forced) return true;
+
+    const trimmed = sentence.trim();
+    if (!trimmed) return false;
+
+    const endPunctuation = /[.!?…。！？]+$/;
+    const endsWithEmoji = /\p{Extended_Pictographic}$/u.test(trimmed);
+
+    return endPunctuation.test(trimmed) || endsWithEmoji;
+  }
+
+  
+  // Split sentences but keep punctuation
+
+    function splitSentences(text: string): string[] {
+      return text.match(/[^.!?]+[.!?]?/g) || [];
+    }
+
+
+
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     // Always update saved input
@@ -38,13 +74,15 @@ export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
 
       setActive(value.trim().length > 0);
 
-      clearTimeout(typingTimerRef.current);
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
 
-      typingTimerRef.current = setTimeout(() => {
+      typingTimerRef.current  = setTimeout(() => {
         const detectedSentences = splitSentences(value).map((sentence) => ({
           text: sentence,
           emoji: isSentenceFinished(sentence, true)
-            ? moodEmojis[detectMood(sentence)]
+            ? moodEmojis[detectMood(sentence) as Mood] ?? null
             : null,
         }));
 
@@ -53,40 +91,21 @@ export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
     }
   };
 
-  // Check if sentence is finished
-  function isSentenceFinished(sentence, forced = false) {
-    if (forced) return true;
 
-    const trimmed = sentence.trim();
-    if (!trimmed) return false;
-
-    const endPunctuation = /[.!?…。！？]+$/;
-    const endsWithEmoji = /\p{Extended_Pictographic}$/u.test(trimmed);
-
-    return endPunctuation.test(trimmed) || endsWithEmoji;
-  }
-
-  // Split sentences but keep punctuation
-  function splitSentences(text) {
-    return text.match(/[^.!?]+[.!?]?/g) || [];
-  }
-
-  const typingTimerRef = useRef(null);
-  const TYPING_DELAY = 700;
-
-  // ----------------------------
 
   // Handle submit
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const fullText = input.content;
 
     const moodsDetected = detectAllMoods(fullText);
 
-    const finalAdvice = getAdviceForMoods(moodsDetected);
+    const finalAdvice = getAdviceForMoods(moodsDetected as Advice[]);
 
-    const emojisToSave = moodsDetected.map((m) => moodEmojis[m]);
+    const emojisToSave: string[] = moodsDetected
+    .map((m) => moodEmojis[m])
+    .filter((e): e is string => !!e); 
 
     onAdvice(finalAdvice);
 
@@ -94,12 +113,11 @@ export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
 
     const cardColors = ["#E3F2FD", "#FCE4EC", "#E8F5E9", "#FFFDE7", "#F3E5F5"];
 
-    const getRandomColor = () => {
-      return cardColors[Math.floor(Math.random() * cardColors.length)];
+    const getRandomColor = (): string => {
+      return cardColors[Math.floor(Math.random() * cardColors.length)]!;
     };
 
-    const cardColor = getRandomColor();
-    console.log(cardColor);
+    const cardColor: string = getRandomColor();
     const noteId = uuidv4();
 
     const note = {
@@ -115,8 +133,9 @@ export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
       const savedNote = await createNote(note);
 
       const pinnedNotes = noteData.filter((note) => note.is_pinned);
+      console.log(pinnedNotes)
 
-      onAddNote((prev) => {
+      onAddNote((prev: any) => {
         const merged = [...pinnedNotes, savedNote, ...prev];
         const unique = Array.from(
           new Map(merged.map((n) => [n.id, n])).values(),
@@ -158,12 +177,13 @@ export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
             className={`${checked ? "" : "mt-10 text-[20px]"} h-24 border border-transparent bg-transparent py-1 pl-2 transition focus:border-gray-300 focus:ring-0 focus:outline-none`}
             value={input.content}
             onChange={handleChange}
-            onKeyDown={(e) => {
+            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
               if (e.key === "Enter" && !e.shiftKey) {
-                const detectedSentences = splitSentences(e.target.value).map(
+                 const target = e.target as HTMLTextAreaElement;
+                const detectedSentences = splitSentences(target.value).map(
                   (sentence) => ({
                     text: sentence,
-                    emoji: moodEmojis[detectMood(sentence)],
+                    emoji: moodEmojis[detectMood(sentence)as Mood] ?? null,
                   }),
                 );
                 setSentences(detectedSentences);
@@ -173,7 +193,7 @@ export default function AddNoteForm({ onAdvice, onAddNote, noteData }) {
               const detectedSentences = splitSentences(e.target.value).map(
                 (sentence) => ({
                   text: sentence,
-                  emoji: moodEmojis[detectMood(sentence)],
+                  emoji: moodEmojis[detectMood(sentence)as Mood] ?? null,
                 }),
               );
               setSentences(detectedSentences);

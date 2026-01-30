@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import NoteCard from "./notes/NoteCard";
 import { deleteNote, fetchNotes } from "../services/noteServies";
 import NoteList from "./notes/NoteList";
+import { Note } from "./types/note";
 
-const SERVER = "http://localhost:5000";
 
 function App() {
-  const [note, setNote] = useState([]);
-  const [adviceText, setAdviceText] = useState(null);
+  const [note, setNote] = useState< Note[] >([]);
+  const [adviceText, setAdviceText] = useState<string | null>(null);
 
-  function pinNote(updatedNote) {
+  function pinNote(updatedNote: Note) {
     setNote((prev) => {
       const updated = prev.map((note) =>
         note.id === updatedNote.id ? updatedNote : note,
@@ -17,7 +17,7 @@ function App() {
 
       return [...updated].sort((a, b) => {
         if (a.is_pinned !== b.is_pinned) {
-          return b.is_pinned - a.is_pinned;
+          return Number(b.is_pinned) - Number(a.is_pinned);
         }
         return b.original_order - a.original_order;
       });
@@ -38,14 +38,14 @@ function App() {
     loadNotes();
   }, []);
 
-  function handleToggle(id) {
+  function handleToggle(id: string) {
     const selectedNote = note.find((n) => n.id === id);
     if (!selectedNote) return;
 
     setAdviceText(selectedNote.sentences);
   }
 
-  const handleDeleteNote = async (id) => {
+  const handleDeleteNote = async (id: string) => {
     try {
       deleteNote(id);
       // This will remove it from frontend instantly
@@ -56,17 +56,17 @@ function App() {
   };
 
   return (
-    <div className=" px-4 py-5 md:px-10">
+    <div className="px-4 py-5 md:px-10">
       <NoteCard
-        note={note}
+        noteData={note}
         onAddNote={setNote}
-        onSetAdviceText={setAdviceText}
+        onAdvice={setAdviceText}
         adviceText={adviceText}
       />
       <NoteList
         note={note}
         onToggle={handleToggle}
-        pinNote={pinNote}
+        onPinned={pinNote}
         onDeleteNote={handleDeleteNote}
       />
     </div>

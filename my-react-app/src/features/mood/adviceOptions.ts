@@ -1,3 +1,6 @@
+
+
+
 export const adviceOptions = {
   happy: [
     "Keep smiling and spread the positivity!",
@@ -39,4 +42,6 @@ export const adviceOptions = {
     "Multiple emotions are normal. Pause and reflect on them calmly.",
     "You may have different feelings now. Be gentle with yourself."
   ]
-};
+} as const;
+
+export type Advice = keyof typeof adviceOptions;

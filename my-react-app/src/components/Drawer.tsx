@@ -10,6 +10,20 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+
+
+type DrawerProps = {
+  children: string;
+  id: string;
+  title: string;
+  mood: string;
+  date: string;
+  content: string;
+  handleToggle?: () => void; 
+}
+
+
+
 export default function DrawerScrollableContent({
   children,
   id,
@@ -18,14 +32,14 @@ export default function DrawerScrollableContent({
   date,
   content,
   handleToggle,
-}) {
-  const [open, setOpen] = useState(false);
+}: DrawerProps) {
+  const [open, setOpen] = useState<boolean>(false);
 
   return (
     <Drawer
       direction="right"
       open={open}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={(nextOpen: boolean) => {
         setOpen(nextOpen);
         handleToggle?.();
       }}
@@ -35,7 +49,7 @@ export default function DrawerScrollableContent({
       <DrawerTrigger asChild>
         <Button
           className="appearance-none border-none bg-transparent text-blue-500 hover:bg-transparent focus:outline-none"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
             e.currentTarget.blur();
           }}
         >
@@ -56,7 +70,7 @@ export default function DrawerScrollableContent({
             <Button
               variant="outline"
               onClick={() => {
-                setOpen(false); 
+                setOpen(false);
                 handleToggle?.();
               }}
             >
